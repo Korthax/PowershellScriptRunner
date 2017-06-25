@@ -4,11 +4,11 @@ function Proxi
     Param(
         [Parameter(Position=0, Mandatory=$true)]
         [ValidateScript({
-            if(Test-Path "$PSScriptRoot/scripts/*" -Include "$_.ps1") {
+            if(Test-Path "$($ENV:PROXI_SCRIPTS)/*" -Include "$_.ps1") {
                 return $true
             }
 
-            throw "Unknow script '$PSScriptRoot/scripts/$_.ps1'"
+            throw "Unknown script '$($ENV:PROXI_SCRIPTS)/$_.ps1'"
         })]
         [string]$Script,
         [Parameter(Mandatory=$false,ValueFromRemainingArguments=$true)]
@@ -24,7 +24,7 @@ function Proxi
         $runtimeParameterDictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 
         $scriptName = $Script.Replace(".ps1", "")
-        $scriptToRun = Get-ChildItem -Path "$PSScriptRoot/scripts" -Filter "${scriptName}.ps1" -ErrorAction SilentlyContinue  | Select-Object -ExpandProperty FullName
+        $scriptToRun = Get-ChildItem -Path "$($ENV:PROXI_SCRIPTS)" -Filter "${scriptName}.ps1" -ErrorAction SilentlyContinue  | Select-Object -ExpandProperty FullName
 
         if(!$scriptToRun) {
             return
@@ -81,7 +81,7 @@ function Proxi
             return $arguments
         }
 
-        $scriptToRun = Get-ChildItem -Path "$PSScriptRoot/scripts" -Filter "${Script}.ps1" -ErrorAction SilentlyContinue
+        $scriptToRun = Get-ChildItem -Path "$($ENV:PROXI_SCRIPTS)" -Filter "${Script}.ps1" -ErrorAction SilentlyContinue
 
         if(!$scriptToRun) {
             Write-Host -ForegroundColor Red "Script not found."
@@ -100,7 +100,7 @@ if (Get-Command Register-ArgumentCompleter -ea Ignore)
     Register-ArgumentCompleter -CommandName "Proxi" -ParameterName "Script" -ScriptBlock {
         param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameter)
 
-        $targets = Get-ChildItem -Path "$PSScriptRoot/scripts" -Filter "*.ps1" -ErrorAction SilentlyContinue | Where-Object { $_.BaseName.ToString().StartsWith($wordToComplete) }
+        $targets = Get-ChildItem -Path "$($ENV:PROXI_SCRIPTS)" -Filter "*.ps1" -ErrorAction SilentlyContinue | Where-Object { $_.BaseName.ToString().StartsWith($wordToComplete) }
         
         foreach($target in $targets) {
             New-CompletionResult -CompletionText "$($target.BaseName)"
