@@ -1,3 +1,5 @@
+. $PSScriptRoot\ProxiTabExpansion.ps1
+
 function Proxi
 {
     [CmdletBinding()]
@@ -95,17 +97,11 @@ function Proxi
     }
 }
 
-if (Get-Command Register-ArgumentCompleter -ea Ignore)
-{
-    Register-ArgumentCompleter -CommandName "Proxi" -ParameterName "Script" -ScriptBlock {
-        param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameter)
-
-        $targets = Get-ChildItem -Path "$($ENV:PROXI_SCRIPTS)" -Filter "*.ps1" -ErrorAction SilentlyContinue | Where-Object { $_.BaseName.ToString().StartsWith($wordToComplete) }
-        
-        foreach($target in $targets) {
-            New-CompletionResult -CompletionText "$($target.BaseName)"
-        }
-    }
+$members = @{
+    Function = @(
+        'Proxi',
+        'TabExpansion'
+    )
 }
 
-export-modulemember -function Proxi
+Export-ModuleMember @members
