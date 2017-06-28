@@ -15,18 +15,33 @@ Param(
 Begin {
     $RootDir = [System.IO.Path]::GetFullPath($RootDir)
     $ModulePath = "$RootDir/Modules/$Name"
+
+    Function Compile([string] $content) {
+        return $content.Replace("PROXI", $Name.ToUpper()).Replace("proxi", $Name.ToLower()).Replace("Proxi", $Name)
+    }
+
+    Function WriteStartAction([string] $message) {
+        Write-Host -ForegroundColor Cyan $message -NoNewline
+    }
+
+    Function WriteEndAction([bool] $success= $true) {
+        if($success) {
+            Write-Host -ForegroundColor Green "done"
+        }
+        else {
+            Write-Host -ForegroundColor Yellow "skipped"
+        }
+    }
 }
 Process {
-    Write-Host -ForegroundColor Cyan "Creating module directory..." -NoNewline
+    WriteStartAction "Creating module directory..."
     New-Item -ErrorAction Ignore -ItemType directory -Path $ModulePath | Out-Null
-    Write-Host -ForegroundColor Green "done"
+    WriteEndAction
 
-    Write-Host -ForegroundColor Cyan "Writing files..." -NoNewline
-    [string] $proxiModule = Get-Content ".\proxi.psm1" | Out-String
-    [string] $proxiDefinition = Get-Content ".\proxi.psm1" | Out-String
-    [string] $tabExpansion = Get-Content ".\ProxiTabExpansion.ps1" | Out-String
-    $proxiModule.Replace("PROXI", $Name.ToUpper()).Replace("proxi", $Name.ToLower()).Replace("Proxi", $Name) | Out-File "$ModulePath/$Name.psm1"
-    $proxiDefinition.Replace("PROXI", $Name.ToUpper()).Replace("proxi", $Name.ToLower()).Replace("Proxi", $Name) | Out-File "$ModulePath/$Name.psd1"
-    $tabExpansion.Replace("PROXI", $Name.ToUpper()).Replace("proxi", $Name.ToLower()).Replace("Proxi", $Name) | Out-File "$ModulePath/$($Name)TabExpansion.psm1"
-    Write-Host -ForegroundColor Green "done"
+    WriteStartAction "Writing files..."
+    Compile (Get-Content ".\proxi.psm1" | Out-String) | Out-File "$ModulePath/$Name.psm1"
+    Compile (Get-Content ".\proxi.psd1" | Out-String) | Out-File "$ModulePath/$Name.psd1"
+    Compile (Get-Content ".\ProxiTabExpansion.ps1" | Out-String) | Out-File "$ModulePath/$($Name)TabExpansion.psm1"
+    Compile (Get-Content ".\register.ps1" | Out-String) | Out-File "$ModulePath/register.psm1"
+    WriteEndAction
 }

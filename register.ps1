@@ -31,25 +31,39 @@ Param(
 )
 Begin {
     $RootDir = [System.IO.Path]::GetFullPath($RootDir)
-    $ModulePath = "$RootDir/Modules/$Name"
+    $ModuleDir = "$RootDir\Modules\"
+    $ModulePath = "$ModuleDir\$Name"
     if (![System.IO.Path]::IsPathRooted($ScriptDir)) {
         $ScriptDir = [System.IO.Path]::GetFullPath((Join-Path $RootDir $ScriptDir))
     }
+
+    Function WriteStartAction([string] $message) {
+        Write-Host -ForegroundColor Cyan $message -NoNewline
+    }
+
+    Function WriteEndAction([bool] $success= $true) {
+        if($success) {
+            Write-Host -ForegroundColor Green "done"
+        }
+        else {
+            Write-Host -ForegroundColor Yellow "skipped"
+        }
+    }
 }
 Process {
-    Write-Host -ForegroundColor Cyan "Creating environment variables..." -NoNewline
+    WriteStartAction "Creating environment variables..."
     [Environment]::SetEnvironmentVariable("$($Name.ToUpper())_ROOT", $RootDir, "User")
     [Environment]::SetEnvironmentVariable("$($Name.ToUpper())_SCRIPTS", $ScriptDir, "User")
-    Write-Host -ForegroundColor Green "done"
+    WriteEndAction
 
-    Write-Host -ForegroundColor Cyan "Registering module path..." -NoNewline
-    $psModulePath = [Environment]::GetEnvironmentVariable("PSModulePath")
-    if (!$psModulePath.Contains($ModulePath)) {
-        $psModulePath += ";$ModulePath"
+    WriteStartAction "Registering module path..."
+    [string] $psModulePath = [Environment]::GetEnvironmentVariable("PSModulePath")
+    if ($psModulePath -and !($psModulePath.Contains($ModuleDir))) {
+        $psModulePath += ";$ModuleDir"
         [Environment]::SetEnvironmentVariable("PSModulePath", $psModulePath)
-        Write-Host -ForegroundColor Green "done"
+        WriteEndAction
     }
     else {
-        Write-Host -ForegroundColor Yellow "skipped"
+        WriteEndAction $False
     }
 }
